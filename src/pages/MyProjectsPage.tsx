@@ -1,18 +1,13 @@
-import { useState } from "react";
-import { User } from "lucide-react";
+import { useState, useEffect } from "react";
+import api from "@/api/axios";
+
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Typography } from "@/components/ui/typography";
-import {
-  DropdownMenu,
-  DropdownMenuContent,
-  DropdownMenuItem,
-  DropdownMenuSeparator,
-  DropdownMenuTrigger,
-} from "@/components/ui/dropdown-menu";
+
 import logo from "../assets/images/logo.svg";
 import avatarImg from "../assets/images/avatar.png";
 import iconExplore from "../assets/images/icon-explore.svg";
@@ -25,76 +20,35 @@ import iconEdit from "../assets/images/icon-edit.svg";
 import iconPublish from "../assets/images/icon-eye.svg";
 import iconUnpublish from "../assets/images/icon-eye-off.svg";
 import iconDelete from "../assets/images/icon-trash.svg";
-import iconLogout from "../assets/images/icon-logout.svg";
 
 type Project = {
   id: number;
   title: string;
-  thumbnail: string;
-  createdAt: string;
-  plays: number;
-  status: "Published" | "Archived";
+  thumbnail: string | null;
+  created_at: string;
+  status: "published" | "archived";
 };
 
-const MOCK_PROJECTS: Project[] = [
-  {
-    id: 1,
-    title: "test",
-    thumbnail: thumbnailPlaceholder,
-    createdAt: "Yesterday",
-    plays: 0,
-    status: "Published",
-  },
-  {
-    id: 2,
-    title: "test",
-    thumbnail: thumbnailPlaceholder,
-    createdAt: "Yesterday",
-    plays: 0,
-    status: "Archived",
-  },
-];
-
 export default function MyProjectsPage() {
-  // eslint-disable-next-line @typescript-eslint/no-unused-vars
-  const [projects, _setProjects] = useState<Project[]>(MOCK_PROJECTS);
+  const [projects, setProjects] = useState<Project[]>([]);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
 
-  const ProfileDropdown = () => (
-    <DropdownMenu>
-      <DropdownMenuTrigger asChild>
-        <div className="flex items-center gap-3 cursor-pointer">
-          <Avatar className="w-9 h-9">
-            <AvatarImage src={avatarImg} alt="User Avatar" />
-            <AvatarFallback>ZH</AvatarFallback>
-          </Avatar>
-          <span className="text-xs font-medium text-slate-900">zzzdn.hadi</span>
-        </div>
-      </DropdownMenuTrigger>
-      <DropdownMenuContent align="end" className="w-64">
-        <div className="flex flex-col py-2 px-2 border-b">
-          <p className="font-semibold text-sm mb-1">zzzdn.hadi</p>
-          <p className="text-xs text-muted-foreground">zzzdn.hadi@gmail.com</p>
-        </div>
-        <DropdownMenuItem className="cursor-pointer py-2.5" asChild>
-          <a href="/profile" className="flex items-center">
-            <User className="w-4 h-4 mr-2" />
-            Profile
-          </a>
-        </DropdownMenuItem>
-        <DropdownMenuItem className="cursor-pointer py-2.5" asChild>
-          <a href="/my-projects" className="flex items-center">
-            <img src={iconMyProjects} alt="" className="w-4 h-4 mr-2" />
-            My Projects
-          </a>
-        </DropdownMenuItem>
-        <DropdownMenuSeparator />
-        <DropdownMenuItem className="cursor-pointer py-2.5 text-red-600 focus:text-red-600">
-          <img src={iconLogout} alt="" className="w-4 h-4 mr-2" />
-          Logout
-        </DropdownMenuItem>
-      </DropdownMenuContent>
-    </DropdownMenu>
-  );
+  useEffect(() => {
+    const fetchProjects = async () => {
+      try {
+        setLoading(true);
+        const response = await api.get("/api/games");
+        setProjects(response.data.data);
+      } catch (err) {
+        setError("Failed to fetch projects. Please try again later.");
+        console.error(err);
+      } finally {
+        setLoading(false);
+      }
+    };
+    fetchProjects();
+  }, []);
 
   const Navbar = () => (
     <nav className="bg-white border-b sticky top-0 z-10">
@@ -104,7 +58,7 @@ export default function MyProjectsPage() {
         </a>
         <div className="hidden md:flex items-center gap-2">
           <Button variant="ghost" asChild>
-            <a href="/" className="flex items-center gap-2">
+            <a href="/explore" className="flex items-center gap-2">
               <img src={iconExplore} alt="" className="w-5 h-5" />
               <span>Explore</span>
             </a>
@@ -116,11 +70,43 @@ export default function MyProjectsPage() {
             </a>
           </Button>
         </div>
-        <ProfileDropdown />
+        <div className="flex items-center gap-3">
+          <Avatar className="w-9 h-9">
+            <AvatarImage src={avatarImg} alt="User Avatar" />
+            <AvatarFallback>ZH</AvatarFallback>
+          </Avatar>
+          <span className="text-xs font-medium text-slate-900">zzzdn.hadi</span>
+        </div>
       </div>
     </nav>
   );
 
+  if (loading) {
+    return (
+      <div className="w-full h-screen flex flex-col">
+        <Navbar />
+        <div className="flex-grow flex justify-center items-center">
+          <Typography variant="h3">Loading your projects...</Typography>
+        </div>
+      </div>
+    );
+  }
+
+  // Tampilan saat terjadi error
+  if (error) {
+    return (
+      <div className="w-full h-screen flex flex-col">
+        <Navbar />
+        <div className="flex-grow flex justify-center items-center">
+          <Typography variant="h3" className="text-destructive">
+            {error}
+          </Typography>
+        </div>
+      </div>
+    );
+  }
+
+  // Komponen untuk tampilan saat tidak ada proyek (tidak berubah)
   const EmptyState = () => (
     <Card className="flex flex-col items-center justify-center text-center p-12 md:p-20 mt-6">
       <img
@@ -142,6 +128,7 @@ export default function MyProjectsPage() {
     </Card>
   );
 
+  // Komponen untuk menampilkan daftar proyek
   const ProjectList = () => (
     <div className="mt-6 space-y-4">
       {projects.map((project) => (
@@ -149,7 +136,7 @@ export default function MyProjectsPage() {
           <div className="flex items-center justify-between gap-4">
             <div className="flex items-center gap-4">
               <img
-                src={project.thumbnail}
+                src={project.thumbnail || thumbnailPlaceholder} // Gunakan placeholder jika thumbnail null
                 alt={project.title}
                 className="w-24 h-16 rounded-md object-cover"
               />
@@ -158,14 +145,14 @@ export default function MyProjectsPage() {
                   {project.title}
                 </Typography>
                 <Typography variant="small" className="text-muted-foreground">
-                  Created: {project.createdAt} • {project.plays} plays
+                  Created: {new Date(project.created_at).toLocaleDateString()}
                 </Typography>
                 <div className="flex items-center gap-2 mt-2">
                   <Button variant="outline" size="sm" className="h-7">
                     <img src={iconEdit} alt="" className="w-3.5 h-3.5 mr-1.5" />
                     Edit
                   </Button>
-                  {project.status === "Published" ? (
+                  {project.status === "published" ? (
                     <Button variant="outline" size="sm" className="h-7">
                       <img
                         src={iconUnpublish}
@@ -200,11 +187,11 @@ export default function MyProjectsPage() {
               </div>
             </div>
             <Badge
-              variant={project.status === "Published" ? "default" : "secondary"}
+              variant={project.status === "published" ? "default" : "secondary"}
               className={
-                project.status === "Published"
-                  ? "bg-green-100 text-green-800"
-                  : "bg-yellow-100 text-yellow-800"
+                project.status === "published"
+                  ? "capitalize bg-green-100 text-green-800"
+                  : "capitalize bg-yellow-100 text-yellow-800"
               }
             >
               {project.status}
@@ -218,7 +205,6 @@ export default function MyProjectsPage() {
   return (
     <div className="bg-slate-50 min-h-screen font-sans">
       <Navbar />
-
       <main className="max-w-7xl mx-auto py-10 px-6">
         <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-4">
           <div>
@@ -229,14 +215,11 @@ export default function MyProjectsPage() {
               Manage your educational games
             </Typography>
           </div>
-          <Button asChild>
-            <a href="/create-projects" className="flex items-center">
-              <img src={iconPlus} alt="" className="w-5 h-5 mr-2" />
-              New Game
-            </a>
+          <Button>
+            <img src={iconPlus} alt="" className="w-5 h-5 mr-2" />
+            New Game
           </Button>
         </div>
-
         <div className="mt-6 relative">
           <img
             src={iconSearch}
@@ -245,7 +228,7 @@ export default function MyProjectsPage() {
           />
           <Input placeholder="Search your projects..." className="pl-10" />
         </div>
-
+        {/* Render EmptyState atau ProjectList berdasarkan data */}
         {projects.length === 0 ? <EmptyState /> : <ProjectList />}
       </main>
     </div>
