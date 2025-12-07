@@ -31,7 +31,11 @@ const isImageUrl = (content: string) => {
   // Check for http URLs
   if (trimmed.startsWith("http")) return true;
   // Check for local asset paths (Vite dev mode)
-  if (trimmed.startsWith("/src/") && /\.(png|jpg|jpeg|gif|webp|svg)$/i.test(trimmed)) return true;
+  if (
+    trimmed.startsWith("/src/") &&
+    /\.(png|jpg|jpeg|gif|webp|svg)$/i.test(trimmed)
+  )
+    return true;
   // Check for data URLs
   if (trimmed.startsWith("data:image/")) return true;
   return false;
@@ -47,7 +51,9 @@ const useSoundEffects = (isSoundOn: boolean) => {
   // Initialize BGM Audio Objects
   useEffect(() => {
     // Intro: Kahoot Lobby Music (Local file - guaranteed to work!)
-    introAudioRef.current = new Audio(new URL("./audio/kahoot-lobby.mp3", import.meta.url).href);
+    introAudioRef.current = new Audio(
+      new URL("./audio/kahoot-lobby.mp3", import.meta.url).href,
+    );
     introAudioRef.current.loop = true;
     introAudioRef.current.volume = 0.5;
 
@@ -57,12 +63,16 @@ const useSoundEffects = (isSoundOn: boolean) => {
     });
 
     // Game: Happy Day Music (Local file - user liked this)
-    gameAudioRef.current = new Audio(new URL("./audio/happy-day.mp3", import.meta.url).href);
+    gameAudioRef.current = new Audio(
+      new URL("./audio/happy-day.mp3", import.meta.url).href,
+    );
     gameAudioRef.current.loop = true;
     gameAudioRef.current.volume = 0.5;
 
     // Win: FF7 Victory Fanfare
-    winAudioRef.current = new Audio("https://www.myinstants.com/media/sounds/final-fantasy-vii-victory-fanfare-1.mp3");
+    winAudioRef.current = new Audio(
+      "https://www.myinstants.com/media/sounds/final-fantasy-vii-victory-fanfare-1.mp3",
+    );
 
     return () => {
       introAudioRef.current?.pause();
@@ -73,16 +83,20 @@ const useSoundEffects = (isSoundOn: boolean) => {
 
   // Handle Mute/Unmute Volume Control
   useEffect(() => {
-    if (introAudioRef.current) introAudioRef.current.volume = isSoundOn ? 0.3 : 0;
+    if (introAudioRef.current)
+      introAudioRef.current.volume = isSoundOn ? 0.3 : 0;
     if (gameAudioRef.current) gameAudioRef.current.volume = isSoundOn ? 0.3 : 0;
     if (winAudioRef.current) winAudioRef.current.volume = isSoundOn ? 0.4 : 0;
   }, [isSoundOn]);
 
   const getAudioContext = () => {
     if (!audioContextRef.current) {
-      // eslint-disable-next-line @typescript-eslint/no-explicit-any
       audioContextRef.current = new (window.AudioContext ||
-        (window as any).webkitAudioContext)();
+        (
+          window as unknown as Window & {
+            webkitAudioContext: typeof AudioContext;
+          }
+        ).webkitAudioContext)();
     }
     return audioContextRef.current;
   };
@@ -91,7 +105,7 @@ const useSoundEffects = (isSoundOn: boolean) => {
     frequency: number,
     duration: number,
     type: OscillatorType = "sine",
-    volume: number = 0.3
+    volume: number = 0.3,
   ) => {
     if (!isSoundOn) return;
     try {
@@ -108,7 +122,7 @@ const useSoundEffects = (isSoundOn: boolean) => {
       gainNode.gain.setValueAtTime(volume, ctx.currentTime);
       gainNode.gain.exponentialRampToValueAtTime(
         0.01,
-        ctx.currentTime + duration
+        ctx.currentTime + duration,
       );
 
       oscillator.start(ctx.currentTime);
@@ -156,13 +170,15 @@ const useSoundEffects = (isSoundOn: boolean) => {
     introAudioRef.current!.currentTime = 0;
     winAudioRef.current?.pause();
     winAudioRef.current!.currentTime = 0;
-    gameAudioRef.current?.play().catch(() => { });
+    gameAudioRef.current?.play().catch(() => {});
   };
 
   const playWin = () => {
     introAudioRef.current?.pause();
     gameAudioRef.current?.pause();
-    winAudioRef.current?.play().catch(e => console.error("Error playing win sound:", e));
+    winAudioRef.current
+      ?.play()
+      .catch((e) => console.error("Error playing win sound:", e));
   };
 
   const stopBGM = () => {
@@ -171,7 +187,16 @@ const useSoundEffects = (isSoundOn: boolean) => {
     winAudioRef.current?.pause();
   };
 
-  return { playCorrect, playWrong, playShuffle, playClick, playWin, playIntroBGM, playGameBGM, stopBGM };
+  return {
+    playCorrect,
+    playWrong,
+    playShuffle,
+    playClick,
+    playWin,
+    playIntroBGM,
+    playGameBGM,
+    stopBGM,
+  };
 };
 
 // --- KOMPONEN NOTIFIKASI FEEDBACK ---
@@ -318,8 +343,10 @@ const CardStack = ({
   }
 
   let fontSizeClass = "text-lg sm:text-2xl md:text-4xl lg:text-5xl";
-  if (content.length > 12) fontSizeClass = "text-xs sm:text-base md:text-xl lg:text-2xl";
-  else if (content.length > 7) fontSizeClass = "text-sm sm:text-lg md:text-2xl lg:text-3xl";
+  if (content.length > 12)
+    fontSizeClass = "text-xs sm:text-base md:text-xl lg:text-2xl";
+  else if (content.length > 7)
+    fontSizeClass = "text-sm sm:text-lg md:text-2xl lg:text-3xl";
 
   const stackLayers = [];
   const maxLayers = stackCount !== undefined ? Math.min(stackCount, 12) : 12;
@@ -338,7 +365,7 @@ const CardStack = ({
           borderRadius: "0 0 4px 4px",
           boxShadow: i === 0 ? "0 1px 2px rgba(0,0,0,0.1)" : "none",
         }}
-      />
+      />,
     );
   }
 
@@ -357,9 +384,10 @@ const CardStack = ({
             zIndex: 50,
             transformStyle: "preserve-3d",
             ...dynamicStyle,
-            transform: animState === "idle"
-              ? `${dynamicStyle.transform} rotateX(${tilt.x}deg) rotateY(${tilt.y}deg)`
-              : dynamicStyle.transform,
+            transform:
+              animState === "idle"
+                ? `${dynamicStyle.transform} rotateX(${tilt.x}deg) rotateY(${tilt.y}deg)`
+                : dynamicStyle.transform,
           }}
           onMouseMove={handleMouseMove}
           onMouseLeave={handleMouseLeave}
@@ -409,7 +437,7 @@ const IntroScreen = ({
   onStart,
   onEnableAudio,
   selectedDifficulty,
-  onDifficultyChange
+  onDifficultyChange,
 }: {
   onStart: () => void;
   onEnableAudio?: () => void;
@@ -421,30 +449,30 @@ const IntroScreen = ({
     easy: {
       bg: "from-slate-800 via-teal-900 to-slate-900",
       gradient: "rgba(45,212,191,0.1)",
-      particles: ['#2DD4BF', '#5EEAD4', '#99F6E4', '#14B8A6'],
+      particles: ["#2DD4BF", "#5EEAD4", "#99F6E4", "#14B8A6"],
       orb1: "bg-teal-500/20",
       orb2: "bg-cyan-500/15",
-      icons: ['🌿', '✨', '🍀', '🌙'],
+      icons: ["🌿", "✨", "🍀", "🌙"],
       titleColor: "text-white",
       accentColor: "text-teal-400",
     },
     normal: {
       bg: "from-slate-900 via-blue-900 to-slate-900",
       gradient: "rgba(59,130,246,0.15)",
-      particles: ['#3B82F6', '#60A5FA', '#93C5FD', '#1D4ED8'],
+      particles: ["#3B82F6", "#60A5FA", "#93C5FD", "#1D4ED8"],
       orb1: "bg-blue-500/20",
       orb2: "bg-purple-500/20",
-      icons: ['🃏', '🎴', '♠️', '♥️'],
+      icons: ["🃏", "🎴", "♠️", "♥️"],
       titleColor: "text-white",
       accentColor: "text-blue-400",
     },
     hard: {
       bg: "from-gray-900 via-red-950 to-black",
       gradient: "rgba(220,38,38,0.15)",
-      particles: ['#DC2626', '#7F1D1D', '#450A0A', '#991B1B'],
+      particles: ["#DC2626", "#7F1D1D", "#450A0A", "#991B1B"],
       orb1: "bg-red-600/30",
       orb2: "bg-orange-600/20",
-      icons: ['💀', '🔥', '⚡', '👁️'],
+      icons: ["💀", "🔥", "⚡", "👁️"],
       titleColor: "text-red-100",
       accentColor: "text-red-500",
     },
@@ -458,7 +486,12 @@ const IntroScreen = ({
       className={`absolute inset-0 z-[200] bg-gradient-to-br ${theme.bg} flex flex-col items-center justify-center cursor-pointer overflow-hidden transition-all duration-500`}
     >
       {/* Animated Background Gradient */}
-      <div className="absolute inset-0 animate-pulse" style={{ background: `radial-gradient(circle at 50% 50%, ${theme.gradient}, transparent 50%)` }}></div>
+      <div
+        className="absolute inset-0 animate-pulse"
+        style={{
+          background: `radial-gradient(circle at 50% 50%, ${theme.gradient}, transparent 50%)`,
+        }}
+      ></div>
 
       {/* Floating Particles */}
       <div className="absolute inset-0 pointer-events-none">
@@ -480,20 +513,67 @@ const IntroScreen = ({
       </div>
 
       {/* Floating Icons */}
-      <div className="absolute top-20 left-10 text-6xl opacity-20 animate-float" style={{ animationDelay: '0s' }}>{theme.icons[0]}</div>
-      <div className="absolute top-32 right-16 text-5xl opacity-20 animate-float" style={{ animationDelay: '1s' }}>{theme.icons[1]}</div>
-      <div className="absolute bottom-28 left-20 text-5xl opacity-20 animate-float" style={{ animationDelay: '2s' }}>{theme.icons[2]}</div>
-      <div className="absolute bottom-20 right-10 text-6xl opacity-20 animate-float" style={{ animationDelay: '3s' }}>{theme.icons[3]}</div>
+      <div
+        className="absolute top-20 left-10 text-6xl opacity-20 animate-float"
+        style={{ animationDelay: "0s" }}
+      >
+        {theme.icons[0]}
+      </div>
+      <div
+        className="absolute top-32 right-16 text-5xl opacity-20 animate-float"
+        style={{ animationDelay: "1s" }}
+      >
+        {theme.icons[1]}
+      </div>
+      <div
+        className="absolute bottom-28 left-20 text-5xl opacity-20 animate-float"
+        style={{ animationDelay: "2s" }}
+      >
+        {theme.icons[2]}
+      </div>
+      <div
+        className="absolute bottom-20 right-10 text-6xl opacity-20 animate-float"
+        style={{ animationDelay: "3s" }}
+      >
+        {theme.icons[3]}
+      </div>
 
       {/* Glowing Orbs */}
-      <div className={`absolute top-1/4 left-1/4 w-64 h-64 ${theme.orb1} rounded-full blur-[100px] animate-pulse`}></div>
-      <div className={`absolute bottom-1/4 right-1/4 w-48 h-48 ${theme.orb2} rounded-full blur-[80px] animate-pulse`} style={{ animationDelay: '1s' }}></div>
+      <div
+        className={`absolute top-1/4 left-1/4 w-64 h-64 ${theme.orb1} rounded-full blur-[100px] animate-pulse`}
+      ></div>
+      <div
+        className={`absolute bottom-1/4 right-1/4 w-48 h-48 ${theme.orb2} rounded-full blur-[80px] animate-pulse`}
+        style={{ animationDelay: "1s" }}
+      ></div>
 
-      <h1 className={`text-5xl sm:text-7xl font-black ${theme.titleColor} mb-4 tracking-tight drop-shadow-2xl z-10 text-center px-4`}>
-        <span className="inline-block animate-bounce-slow" style={{ animationDelay: '0s' }}>Pair</span>{" "}
-        <span className={`inline-block ${theme.accentColor} animate-bounce-slow`} style={{ animationDelay: '0.1s' }}>or</span>{" "}
-        <span className={`inline-block ${selectedDifficulty === 'hard' ? 'text-red-500' : 'text-red-400'} animate-bounce-slow`} style={{ animationDelay: '0.2s' }}>No</span>{" "}
-        <span className={`inline-block ${selectedDifficulty === 'hard' ? 'text-red-500' : 'text-red-400'} animate-bounce-slow`} style={{ animationDelay: '0.3s' }}>Pair</span>
+      <h1
+        className={`text-5xl sm:text-7xl font-black ${theme.titleColor} mb-4 tracking-tight drop-shadow-2xl z-10 text-center px-4`}
+      >
+        <span
+          className="inline-block animate-bounce-slow"
+          style={{ animationDelay: "0s" }}
+        >
+          Pair
+        </span>{" "}
+        <span
+          className={`inline-block ${theme.accentColor} animate-bounce-slow`}
+          style={{ animationDelay: "0.1s" }}
+        >
+          or
+        </span>{" "}
+        <span
+          className={`inline-block ${selectedDifficulty === "hard" ? "text-red-500" : "text-red-400"} animate-bounce-slow`}
+          style={{ animationDelay: "0.2s" }}
+        >
+          No
+        </span>{" "}
+        <span
+          className={`inline-block ${selectedDifficulty === "hard" ? "text-red-500" : "text-red-400"} animate-bounce-slow`}
+          style={{ animationDelay: "0.3s" }}
+        >
+          Pair
+        </span>
       </h1>
 
       <p className="text-slate-200 text-base sm:text-lg mb-8 z-10 text-center px-4 max-w-md">
@@ -504,29 +584,41 @@ const IntroScreen = ({
       <div className="z-10 mb-10">
         <div className="bg-slate-800/60 backdrop-blur-sm rounded-full p-1 flex gap-1 border border-slate-700">
           <button
-            onClick={(e) => { e.stopPropagation(); onDifficultyChange("easy"); }}
-            className={`px-6 py-2.5 rounded-full font-semibold text-sm transition-all duration-200 ${selectedDifficulty === "easy"
-              ? "bg-green-500 text-white shadow-lg"
-              : "text-slate-400 hover:text-white hover:bg-slate-700/50"
-              }`}
+            onClick={(e) => {
+              e.stopPropagation();
+              onDifficultyChange("easy");
+            }}
+            className={`px-6 py-2.5 rounded-full font-semibold text-sm transition-all duration-200 ${
+              selectedDifficulty === "easy"
+                ? "bg-green-500 text-white shadow-lg"
+                : "text-slate-400 hover:text-white hover:bg-slate-700/50"
+            }`}
           >
             Easy
           </button>
           <button
-            onClick={(e) => { e.stopPropagation(); onDifficultyChange("normal"); }}
-            className={`px-6 py-2.5 rounded-full font-semibold text-sm transition-all duration-200 ${selectedDifficulty === "normal"
-              ? "bg-blue-500 text-white shadow-lg"
-              : "text-slate-400 hover:text-white hover:bg-slate-700/50"
-              }`}
+            onClick={(e) => {
+              e.stopPropagation();
+              onDifficultyChange("normal");
+            }}
+            className={`px-6 py-2.5 rounded-full font-semibold text-sm transition-all duration-200 ${
+              selectedDifficulty === "normal"
+                ? "bg-blue-500 text-white shadow-lg"
+                : "text-slate-400 hover:text-white hover:bg-slate-700/50"
+            }`}
           >
             Normal
           </button>
           <button
-            onClick={(e) => { e.stopPropagation(); onDifficultyChange("hard"); }}
-            className={`px-6 py-2.5 rounded-full font-semibold text-sm transition-all duration-200 ${selectedDifficulty === "hard"
-              ? "bg-red-500 text-white shadow-lg"
-              : "text-slate-400 hover:text-white hover:bg-slate-700/50"
-              }`}
+            onClick={(e) => {
+              e.stopPropagation();
+              onDifficultyChange("hard");
+            }}
+            className={`px-6 py-2.5 rounded-full font-semibold text-sm transition-all duration-200 ${
+              selectedDifficulty === "hard"
+                ? "bg-red-500 text-white shadow-lg"
+                : "text-slate-400 hover:text-white hover:bg-slate-700/50"
+            }`}
           >
             Hard
           </button>
@@ -534,7 +626,10 @@ const IntroScreen = ({
       </div>
 
       <button
-        onClick={(e) => { e.stopPropagation(); onStart(); }}
+        onClick={(e) => {
+          e.stopPropagation();
+          onStart();
+        }}
         className="z-10 group relative flex items-center justify-center px-12 py-4 bg-gradient-to-r from-blue-600 to-blue-500 rounded-2xl hover:scale-110 transition-all duration-300 shadow-[0_0_40px_rgba(59,130,246,0.5)] hover:shadow-[0_0_60px_rgba(59,130,246,0.8)]"
       >
         <span className="text-white font-black text-2xl tracking-wider">
@@ -556,7 +651,7 @@ const PairOrNoPairGame = () => {
   const [timer, setTimer] = useState(0);
 
   const [gameState, setGameState] = useState<"intro" | "playing" | "finished">(
-    "intro"
+    "intro",
   );
   const [isPaused, setIsPaused] = useState(false);
   const [isLoading, setIsLoading] = useState(true);
@@ -587,7 +682,16 @@ const PairOrNoPairGame = () => {
   const [isFullscreen, setIsFullscreen] = useState(false);
   const [isMenuOpen, setIsMenuOpen] = useState(false); // New state for menu
   const gameContainerRef = useRef<HTMLDivElement>(null);
-  const { playCorrect, playWrong, playShuffle, playClick, playWin, playIntroBGM, playGameBGM, stopBGM } = useSoundEffects(isSoundOn);
+  const {
+    playCorrect,
+    playWrong,
+    playShuffle,
+    playClick,
+    playWin,
+    playIntroBGM,
+    playGameBGM,
+    stopBGM,
+  } = useSoundEffects(isSoundOn);
 
   // Manage BGM based on Game State
   useEffect(() => {
@@ -619,7 +723,10 @@ const PairOrNoPairGame = () => {
 
       if (score > currentBest) {
         bests[difficulty] = score;
-        localStorage.setItem("pairOrNoPair_personalBest", JSON.stringify(bests));
+        localStorage.setItem(
+          "pairOrNoPair_personalBest",
+          JSON.stringify(bests),
+        );
         setPersonalBest(score);
         setIsNewBest(true);
       } else {
@@ -656,7 +763,7 @@ const PairOrNoPairGame = () => {
     const fetchData = async () => {
       try {
         const response = await fetch(
-          `${import.meta.env.VITE_API_URL}/api/game/game-type/pair-or-no-pair/${gameId}/play/public`
+          `${import.meta.env.VITE_API_URL}/api/game/game-type/pair-or-no-pair/${gameId}/play/public`,
         );
         const data = await response.json();
 
@@ -673,7 +780,11 @@ const PairOrNoPairGame = () => {
           { id: "5", left_content: "Book", right_content: bookImage },
           { id: "6", left_content: "Camera", right_content: cameraImage },
           { id: "7", left_content: "Bird", right_content: birdImage },
-          { id: "8", left_content: "Strawberry", right_content: strawberryImage },
+          {
+            id: "8",
+            left_content: "Strawberry",
+            right_content: strawberryImage,
+          },
           { id: "9", left_content: "Watch", right_content: watchImage },
           { id: "10", left_content: "Elephant", right_content: elephantImage },
         ]);
@@ -688,7 +799,7 @@ const PairOrNoPairGame = () => {
   const smartShuffle = (
     leftCards: StackCard[],
     rightCards: StackCard[],
-    currentShuffleCount: number
+    currentShuffleCount: number,
   ): { left: StackCard[]; right: StackCard[] } => {
     const shouldForcePair =
       currentShuffleCount > 0 && currentShuffleCount % 2 === 0;
@@ -711,7 +822,7 @@ const PairOrNoPairGame = () => {
     if (shouldForcePair && shuffledLeft.length > 0) {
       const firstLeftId = shuffledLeft[0].id;
       const matchingIndex = shuffledRight.findIndex(
-        (card) => card.id === firstLeftId
+        (card) => card.id === firstLeftId,
       );
       if (matchingIndex > 0) {
         [shuffledRight[0], shuffledRight[matchingIndex]] = [
@@ -758,7 +869,7 @@ const PairOrNoPairGame = () => {
     let { left: currentLeft, right: currentRight } = smartShuffle(
       leftCards,
       rightCards,
-      0
+      0,
     );
     setLeftStack(currentLeft);
     setRightStack(currentRight);
@@ -782,7 +893,7 @@ const PairOrNoPairGame = () => {
             const result = smartShuffle(
               currentLeft,
               currentRight,
-              loopCount + 1
+              loopCount + 1,
             );
             currentLeft = result.left;
             currentRight = result.right;
@@ -856,7 +967,7 @@ const PairOrNoPairGame = () => {
         const { left, right } = smartShuffle(
           leftStack,
           rightStack,
-          newShuffleCount
+          newShuffleCount,
         );
         setLeftStack(left);
         setRightStack(right);
@@ -897,13 +1008,17 @@ const PairOrNoPairGame = () => {
         if (isSoundOn) playCorrect();
         const newCombo = comboCount + 1;
         setComboCount(newCombo); // Increment Combo
-        setMaxCombo(m => Math.max(m, newCombo)); // Track max combo
+        setMaxCombo((m) => Math.max(m, newCombo)); // Track max combo
 
         // Calculate points: Base 100 + Combo Bonus (combo * 50) * Difficulty Multiplier
-        const difficultyMultiplier = difficulty === "easy" ? 0.5 : difficulty === "hard" ? 2 : 1;
+        const difficultyMultiplier =
+          difficulty === "easy" ? 0.5 : difficulty === "hard" ? 2 : 1;
         const basePoints = 100;
         const comboBonus = newCombo * 50;
-        setScore(s => s + Math.round((basePoints + comboBonus) * difficultyMultiplier));
+        setScore(
+          (s) =>
+            s + Math.round((basePoints + comboBonus) * difficultyMultiplier),
+        );
 
         setTimeout(() => setFeedback(null), 1000);
 
@@ -958,7 +1073,7 @@ const PairOrNoPairGame = () => {
             const { left, right } = smartShuffle(
               leftStack,
               rightStack,
-              newShuffleCount
+              newShuffleCount,
             );
             setLeftStack(left);
             setRightStack(right);
@@ -988,14 +1103,11 @@ const PairOrNoPairGame = () => {
     // Sound is handled by useEffect on gameState change
 
     try {
-      await fetch(
-        `${import.meta.env.VITE_API_URL}/api/game/play-count`,
-        {
-          method: "POST",
-          headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({ game_id: gameId }),
-        }
-      );
+      await fetch(`${import.meta.env.VITE_API_URL}/api/game/play-count`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ game_id: gameId }),
+      });
     } catch (error) {
       console.error("Error updating play count:", error);
     }
@@ -1057,62 +1169,234 @@ const PairOrNoPairGame = () => {
         .animate-bounce-slow { animation: bounce-slow 2s ease-in-out infinite; }
       `}</style>
       <FeedbackIcon type={feedback} />
-      {gameState === "intro" && <IntroScreen onStart={handleStart} onEnableAudio={playIntroBGM} selectedDifficulty={difficulty} onDifficultyChange={setDifficulty} />}
+      {gameState === "intro" && (
+        <IntroScreen
+          onStart={handleStart}
+          onEnableAudio={playIntroBGM}
+          selectedDifficulty={difficulty}
+          onDifficultyChange={setDifficulty}
+        />
+      )}
       {gameState === "playing" && currentLeft && currentRight && (
-        <div className={`transition-all duration-500 ease-in-out relative flex flex-col ${isFullscreen ? "fixed inset-0 w-full h-full bg-slate-100 z-50" : "w-full max-w-6xl h-[80vh] bg-slate-200/90 backdrop-blur-sm rounded-3xl shadow-2xl border-4 border-white"}`}>
+        <div
+          className={`transition-all duration-500 ease-in-out relative flex flex-col ${isFullscreen ? "fixed inset-0 w-full h-full bg-slate-100 z-50" : "w-full max-w-6xl h-[80vh] bg-slate-200/90 backdrop-blur-sm rounded-3xl shadow-2xl border-4 border-white"}`}
+        >
           <div className="absolute top-0 left-0 right-0 p-6 flex justify-between items-start z-20 pointer-events-none">
             <div className="pointer-events-auto">
-              <button onClick={() => { handleFinish(); window.location.href = "/"; }} className="flex items-center gap-2 text-slate-600 hover:text-slate-900 font-bold transition-colors group">
-                <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round" className="group-hover:-translate-x-1 transition-transform"><line x1="19" y1="12" x2="5" y2="12"></line><polyline points="12 19 5 12 12 5"></polyline></svg>
+              <button
+                onClick={() => {
+                  handleFinish();
+                  window.location.href = "/";
+                }}
+                className="flex items-center gap-2 text-slate-600 hover:text-slate-900 font-bold transition-colors group"
+              >
+                <svg
+                  width="24"
+                  height="24"
+                  viewBox="0 0 24 24"
+                  fill="none"
+                  stroke="currentColor"
+                  strokeWidth="2.5"
+                  strokeLinecap="round"
+                  strokeLinejoin="round"
+                  className="group-hover:-translate-x-1 transition-transform"
+                >
+                  <line x1="19" y1="12" x2="5" y2="12"></line>
+                  <polyline points="12 19 5 12 12 5"></polyline>
+                </svg>
                 <span className="text-lg">Exit Game</span>
               </button>
             </div>
             <div className="pointer-events-auto flex flex-col items-end gap-1">
-              <div className="text-4xl font-black text-slate-800 font-mono tracking-tight mb-2">{formatTime(timer)}</div>
+              <div className="text-4xl font-black text-slate-800 font-mono tracking-tight mb-2">
+                {formatTime(timer)}
+              </div>
               <div className="flex items-center gap-2 bg-white/50 px-3 py-1 rounded-xl backdrop-blur-sm border border-white/40">
                 <span className="text-green-600 font-bold text-2xl">✓</span>
-                <span className="font-black text-slate-800 text-2xl">{correctCount}</span>
+                <span className="font-black text-slate-800 text-2xl">
+                  {correctCount}
+                </span>
               </div>
             </div>
           </div>
           {isPaused && (
             <div className="absolute inset-0 z-15 bg-black/60 backdrop-blur-[2px] flex flex-col items-center justify-center text-center p-6 animate-fade-in">
-              <h3 className="text-white text-2xl font-medium mb-4 drop-shadow-md">Instruction</h3>
-              <p className="text-white text-3xl md:text-4xl font-bold max-w-2xl leading-relaxed drop-shadow-lg">Decide whether the two cards belong together or not.</p>
+              <h3 className="text-white text-2xl font-medium mb-4 drop-shadow-md">
+                Instruction
+              </h3>
+              <p className="text-white text-3xl md:text-4xl font-bold max-w-2xl leading-relaxed drop-shadow-lg">
+                Decide whether the two cards belong together or not.
+              </p>
             </div>
           )}
-          <div className={`flex-1 flex flex-col items-center justify-center relative z-10 ${isFullscreen ? 'bg-slate-50' : 'bg-gradient-to-br from-slate-100 to-blue-50'}`}>
+          <div
+            className={`flex-1 flex flex-col items-center justify-center relative z-10 ${isFullscreen ? "bg-slate-50" : "bg-gradient-to-br from-slate-100 to-blue-50"}`}
+          >
             <div className="flex flex-col sm:flex-row gap-3 sm:gap-6 md:gap-12 lg:gap-20 items-center justify-center w-full px-3 mb-6 sm:mb-12 md:mb-20">
-              <div className="transition-transform"><CardStack content={currentLeft.content} animState={animState} side="left" stackCount={Math.max(0, items.length - correctCount - 1)} /></div>
-              <div className="transition-transform"><CardStack content={currentRight.content} animState={animState} side="right" stackCount={Math.max(0, items.length - correctCount - 1)} /></div>
+              <div className="transition-transform">
+                <CardStack
+                  content={currentLeft.content}
+                  animState={animState}
+                  side="left"
+                  stackCount={Math.max(0, items.length - correctCount - 1)}
+                />
+              </div>
+              <div className="transition-transform">
+                <CardStack
+                  content={currentRight.content}
+                  animState={animState}
+                  side="right"
+                  stackCount={Math.max(0, items.length - correctCount - 1)}
+                />
+              </div>
             </div>
             <div className="flex gap-3 sm:gap-4 z-20">
-              <button onClick={() => handleAnswer(false)} disabled={isPaused || isProcessing} className="px-5 sm:px-6 md:px-8 lg:px-10 py-2.5 sm:py-3 md:py-4 bg-[#1e293b] text-white rounded-lg font-bold text-sm sm:text-base md:text-lg lg:text-xl hover:bg-[#334155] transition-all shadow-lg active:scale-95 disabled:opacity-50 disabled:cursor-not-allowed">No pair</button>
-              <button onClick={() => handleAnswer(true)} disabled={isPaused || isProcessing} className="px-5 sm:px-6 md:px-8 lg:px-10 py-2.5 sm:py-3 md:py-4 bg-[#172554] text-white rounded-lg font-bold text-sm sm:text-base md:text-lg lg:text-xl hover:bg-[#1e3a8a] transition-all shadow-lg active:scale-95 disabled:opacity-50 disabled:cursor-not-allowed">Pair</button>
+              <button
+                onClick={() => handleAnswer(false)}
+                disabled={isPaused || isProcessing}
+                className="px-5 sm:px-6 md:px-8 lg:px-10 py-2.5 sm:py-3 md:py-4 bg-[#1e293b] text-white rounded-lg font-bold text-sm sm:text-base md:text-lg lg:text-xl hover:bg-[#334155] transition-all shadow-lg active:scale-95 disabled:opacity-50 disabled:cursor-not-allowed"
+              >
+                No pair
+              </button>
+              <button
+                onClick={() => handleAnswer(true)}
+                disabled={isPaused || isProcessing}
+                className="px-5 sm:px-6 md:px-8 lg:px-10 py-2.5 sm:py-3 md:py-4 bg-[#172554] text-white rounded-lg font-bold text-sm sm:text-base md:text-lg lg:text-xl hover:bg-[#1e3a8a] transition-all shadow-lg active:scale-95 disabled:opacity-50 disabled:cursor-not-allowed"
+              >
+                Pair
+              </button>
             </div>
           </div>
           <div className="absolute bottom-6 left-6 right-6 flex justify-between items-center z-20 pointer-events-none">
             <div className="pointer-events-auto relative">
-              <button onClick={() => { setIsMenuOpen(!isMenuOpen); setIsPaused(!isMenuOpen); }} className="w-10 h-10 bg-white rounded-lg border-2 border-slate-300 flex items-center justify-center hover:bg-slate-50 transition shadow-sm">
-                <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" className="text-slate-600"><line x1="3" y1="6" x2="21" y2="6"></line><line x1="3" y1="12" x2="21" y2="12"></line><line x1="3" y1="18" x2="21" y2="18"></line></svg>
+              <button
+                onClick={() => {
+                  setIsMenuOpen(!isMenuOpen);
+                  setIsPaused(!isMenuOpen);
+                }}
+                className="w-10 h-10 bg-white rounded-lg border-2 border-slate-300 flex items-center justify-center hover:bg-slate-50 transition shadow-sm"
+              >
+                <svg
+                  width="20"
+                  height="20"
+                  viewBox="0 0 24 24"
+                  fill="none"
+                  stroke="currentColor"
+                  strokeWidth="2"
+                  className="text-slate-600"
+                >
+                  <line x1="3" y1="6" x2="21" y2="6"></line>
+                  <line x1="3" y1="12" x2="21" y2="12"></line>
+                  <line x1="3" y1="18" x2="21" y2="18"></line>
+                </svg>
               </button>
               {isMenuOpen && (
                 <div className="absolute bottom-14 left-0 w-48 bg-slate-800 rounded-xl shadow-2xl border border-slate-700 overflow-hidden z-50 animate-scale-in origin-bottom-left">
-                  <div className="p-2 border-b border-slate-700"><p className="text-xs font-bold text-slate-400 px-3 py-1">PAIR OR NO PAIR</p></div>
+                  <div className="p-2 border-b border-slate-700">
+                    <p className="text-xs font-bold text-slate-400 px-3 py-1">
+                      PAIR OR NO PAIR
+                    </p>
+                  </div>
                   <div className="flex flex-col p-1">
-                    <button onClick={() => { setGameState("finished"); handleFinish(); setIsMenuOpen(false); }} className="text-left px-4 py-3 text-slate-200 hover:bg-slate-700 rounded-lg transition-colors font-medium text-sm">Finish game</button>
-                    <button onClick={() => { handleStart(); setIsMenuOpen(false); }} className="text-left px-4 py-3 text-slate-200 hover:bg-slate-700 rounded-lg transition-colors font-medium text-sm">Start again</button>
-                    <button onClick={() => { setIsMenuOpen(false); setIsPaused(false); }} className="text-left px-4 py-3 text-slate-200 hover:bg-slate-700 rounded-lg transition-colors font-medium text-sm">Resume</button>
+                    <button
+                      onClick={() => {
+                        setGameState("finished");
+                        handleFinish();
+                        setIsMenuOpen(false);
+                      }}
+                      className="text-left px-4 py-3 text-slate-200 hover:bg-slate-700 rounded-lg transition-colors font-medium text-sm"
+                    >
+                      Finish game
+                    </button>
+                    <button
+                      onClick={() => {
+                        handleStart();
+                        setIsMenuOpen(false);
+                      }}
+                      className="text-left px-4 py-3 text-slate-200 hover:bg-slate-700 rounded-lg transition-colors font-medium text-sm"
+                    >
+                      Start again
+                    </button>
+                    <button
+                      onClick={() => {
+                        setIsMenuOpen(false);
+                        setIsPaused(false);
+                      }}
+                      className="text-left px-4 py-3 text-slate-200 hover:bg-slate-700 rounded-lg transition-colors font-medium text-sm"
+                    >
+                      Resume
+                    </button>
                   </div>
                 </div>
               )}
             </div>
             <div className="flex gap-2 pointer-events-auto">
-              <button onClick={() => { if (isSoundOn) playClick(); setIsSoundOn(!isSoundOn); }} className="w-10 h-10 bg-white rounded-lg border-2 border-slate-300 flex items-center justify-center hover:bg-slate-50 transition shadow-sm">
-                {isSoundOn ? <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" className="text-slate-600"><polygon points="11 5 6 9 2 9 2 15 6 15 11 19 11 5"></polygon><path d="M19.07 4.93a10 10 0 0 1 0 14.14"></path><path d="M15.54 8.46a5 5 0 0 1 0 7.07"></path></svg> : <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" className="text-slate-600"><polygon points="11 5 6 9 2 9 2 15 6 15 11 19 11 5"></polygon><line x1="23" y1="9" x2="17" y2="15"></line><line x1="17" y1="9" x2="23" y2="15"></line></svg>}
+              <button
+                onClick={() => {
+                  if (isSoundOn) playClick();
+                  setIsSoundOn(!isSoundOn);
+                }}
+                className="w-10 h-10 bg-white rounded-lg border-2 border-slate-300 flex items-center justify-center hover:bg-slate-50 transition shadow-sm"
+              >
+                {isSoundOn ? (
+                  <svg
+                    width="20"
+                    height="20"
+                    viewBox="0 0 24 24"
+                    fill="none"
+                    stroke="currentColor"
+                    strokeWidth="2"
+                    className="text-slate-600"
+                  >
+                    <polygon points="11 5 6 9 2 9 2 15 6 15 11 19 11 5"></polygon>
+                    <path d="M19.07 4.93a10 10 0 0 1 0 14.14"></path>
+                    <path d="M15.54 8.46a5 5 0 0 1 0 7.07"></path>
+                  </svg>
+                ) : (
+                  <svg
+                    width="20"
+                    height="20"
+                    viewBox="0 0 24 24"
+                    fill="none"
+                    stroke="currentColor"
+                    strokeWidth="2"
+                    className="text-slate-600"
+                  >
+                    <polygon points="11 5 6 9 2 9 2 15 6 15 11 19 11 5"></polygon>
+                    <line x1="23" y1="9" x2="17" y2="15"></line>
+                    <line x1="17" y1="9" x2="23" y2="15"></line>
+                  </svg>
+                )}
               </button>
-              <button onClick={toggleFullscreen} className="w-10 h-10 bg-white rounded-lg border-2 border-slate-300 flex items-center justify-center hover:bg-slate-50 transition shadow-sm">
-                {isFullscreen ? <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" className="text-slate-600"><path d="M8 3v3a2 2 0 0 1-2 2H3m18 0h-3a2 2 0 0 1-2-2V3m0 18v-3a2 2 0 0 1 2-2h3M3 16h3a2 2 0 0 1 2 2v3"></path></svg> : <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" className="text-slate-600"><path d="M15 3h6v6M9 21H3v-6M21 3l-7 7M3 21l7-7"></path></svg>}
+              <button
+                onClick={toggleFullscreen}
+                className="w-10 h-10 bg-white rounded-lg border-2 border-slate-300 flex items-center justify-center hover:bg-slate-50 transition shadow-sm"
+              >
+                {isFullscreen ? (
+                  <svg
+                    width="20"
+                    height="20"
+                    viewBox="0 0 24 24"
+                    fill="none"
+                    stroke="currentColor"
+                    strokeWidth="2"
+                    className="text-slate-600"
+                  >
+                    <path d="M8 3v3a2 2 0 0 1-2 2H3m18 0h-3a2 2 0 0 1-2-2V3m0 18v-3a2 2 0 0 1 2-2h3M3 16h3a2 2 0 0 1 2 2v3"></path>
+                  </svg>
+                ) : (
+                  <svg
+                    width="20"
+                    height="20"
+                    viewBox="0 0 24 24"
+                    fill="none"
+                    stroke="currentColor"
+                    strokeWidth="2"
+                    className="text-slate-600"
+                  >
+                    <path d="M15 3h6v6M9 21H3v-6M21 3l-7 7M3 21l7-7"></path>
+                  </svg>
+                )}
               </button>
             </div>
           </div>
@@ -1129,7 +1413,16 @@ const PairOrNoPairGame = () => {
                 style={{
                   left: `${Math.random() * 100}%`,
                   top: `-10px`,
-                  backgroundColor: ['#FFD700', '#FF6B6B', '#4ECDC4', '#45B7D1', '#96CEB4', '#FFEAA7', '#DDA0DD', '#98D8C8'][i % 8],
+                  backgroundColor: [
+                    "#FFD700",
+                    "#FF6B6B",
+                    "#4ECDC4",
+                    "#45B7D1",
+                    "#96CEB4",
+                    "#FFEAA7",
+                    "#DDA0DD",
+                    "#98D8C8",
+                  ][i % 8],
                   animationDelay: `${Math.random() * 3}s`,
                   animationDuration: `${3 + Math.random() * 2}s`,
                 }}
@@ -1137,41 +1430,89 @@ const PairOrNoPairGame = () => {
             ))}
           </div>
           <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[600px] h-[600px] bg-blue-600/20 rounded-full blur-[100px] pointer-events-none"></div>
-          <div className="mb-8 animate-bounce"><svg width="80" height="80" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg"><path d="M12 2L14.5 9.5L22 12L14.5 14.5L12 22L9.5 14.5L2 12L9.5 9.5L12 2Z" fill="#FBBF24" className="animate-spin-slow" /><circle cx="18" cy="6" r="2" fill="#34D399" /><circle cx="6" cy="18" r="2" fill="#60A5FA" /><circle cx="6" cy="6" r="2" fill="#F87171" /><circle cx="18" cy="18" r="2" fill="#A78BFA" /></svg></div>
-          <h2 className="text-6xl md:text-7xl font-black mb-8 text-transparent bg-clip-text bg-gradient-to-r from-green-400 to-blue-500 tracking-tight drop-shadow-lg">COMPLETED!</h2>
+          <div className="mb-8 animate-bounce">
+            <svg
+              width="80"
+              height="80"
+              viewBox="0 0 24 24"
+              fill="none"
+              xmlns="http://www.w3.org/2000/svg"
+            >
+              <path
+                d="M12 2L14.5 9.5L22 12L14.5 14.5L12 22L9.5 14.5L2 12L9.5 9.5L12 2Z"
+                fill="#FBBF24"
+                className="animate-spin-slow"
+              />
+              <circle cx="18" cy="6" r="2" fill="#34D399" />
+              <circle cx="6" cy="18" r="2" fill="#60A5FA" />
+              <circle cx="6" cy="6" r="2" fill="#F87171" />
+              <circle cx="18" cy="18" r="2" fill="#A78BFA" />
+            </svg>
+          </div>
+          <h2 className="text-6xl md:text-7xl font-black mb-8 text-transparent bg-clip-text bg-gradient-to-r from-green-400 to-blue-500 tracking-tight drop-shadow-lg">
+            COMPLETED!
+          </h2>
 
           {/* Score Display */}
           <div className="text-center mb-4">
-            <p className="text-slate-400 text-sm font-bold tracking-[0.2em] uppercase mb-2">Total Score</p>
-            <p className="text-7xl font-black text-transparent bg-clip-text bg-gradient-to-r from-yellow-400 to-orange-500 animate-pulse">{score.toLocaleString()}</p>
+            <p className="text-slate-400 text-sm font-bold tracking-[0.2em] uppercase mb-2">
+              Total Score
+            </p>
+            <p className="text-7xl font-black text-transparent bg-clip-text bg-gradient-to-r from-yellow-400 to-orange-500 animate-pulse">
+              {score.toLocaleString()}
+            </p>
             {isNewBest && (
-              <p className="mt-2 text-lg font-bold text-green-400 animate-bounce">🎉 NEW BEST! 🎉</p>
+              <p className="mt-2 text-lg font-bold text-green-400 animate-bounce">
+                🎉 NEW BEST! 🎉
+              </p>
             )}
           </div>
 
           {/* Personal Best */}
           <div className="flex items-center gap-2 mb-6 text-slate-400">
-            <span className="text-sm">Personal Best ({difficulty.charAt(0).toUpperCase() + difficulty.slice(1)}):</span>
-            <span className="text-lg font-bold text-yellow-300">{Math.max(score, personalBest).toLocaleString()}</span>
+            <span className="text-sm">
+              Personal Best (
+              {difficulty.charAt(0).toUpperCase() + difficulty.slice(1)}):
+            </span>
+            <span className="text-lg font-bold text-yellow-300">
+              {Math.max(score, personalBest).toLocaleString()}
+            </span>
           </div>
 
           <div className="flex flex-col sm:flex-row gap-4 w-full max-w-2xl px-4 relative z-10">
             <div className="flex-1 bg-[#1e293b]/80 backdrop-blur-md border border-slate-700 rounded-2xl p-4 text-center shadow-xl">
-              <p className="text-slate-400 text-xs font-bold tracking-[0.2em] uppercase mb-1">Correct</p>
+              <p className="text-slate-400 text-xs font-bold tracking-[0.2em] uppercase mb-1">
+                Correct
+              </p>
               <div className="flex items-center justify-center gap-2 text-3xl font-mono font-bold text-green-400">
-                <span>{correctCount}</span><span className="text-slate-600">/</span><span>{items.length}</span>
+                <span>{correctCount}</span>
+                <span className="text-slate-600">/</span>
+                <span>{items.length}</span>
               </div>
             </div>
             <div className="flex-1 bg-[#1e293b]/80 backdrop-blur-md border border-slate-700 rounded-2xl p-4 text-center shadow-xl">
-              <p className="text-slate-400 text-xs font-bold tracking-[0.2em] uppercase mb-1">Time</p>
-              <p className="text-3xl font-mono font-bold text-yellow-400">{formatTime(timer)}</p>
+              <p className="text-slate-400 text-xs font-bold tracking-[0.2em] uppercase mb-1">
+                Time
+              </p>
+              <p className="text-3xl font-mono font-bold text-yellow-400">
+                {formatTime(timer)}
+              </p>
             </div>
             <div className="flex-1 bg-[#1e293b]/80 backdrop-blur-md border border-slate-700 rounded-2xl p-4 text-center shadow-xl">
-              <p className="text-slate-400 text-xs font-bold tracking-[0.2em] uppercase mb-1">Max Combo</p>
-              <p className="text-3xl font-mono font-bold text-purple-400">{maxCombo}x</p>
+              <p className="text-slate-400 text-xs font-bold tracking-[0.2em] uppercase mb-1">
+                Max Combo
+              </p>
+              <p className="text-3xl font-mono font-bold text-purple-400">
+                {maxCombo}x
+              </p>
             </div>
           </div>
-          <button onClick={() => window.location.reload()} className="mt-10 px-12 py-4 bg-blue-600 hover:bg-blue-500 text-white rounded-full font-black text-lg tracking-wide transition-all shadow-[0_0_20px_rgba(37,99,235,0.5)] hover:shadow-[0_0_30px_rgba(37,99,235,0.8)] hover:scale-105 active:scale-95">PLAY AGAIN</button>
+          <button
+            onClick={() => window.location.reload()}
+            className="mt-10 px-12 py-4 bg-blue-600 hover:bg-blue-500 text-white rounded-full font-black text-lg tracking-wide transition-all shadow-[0_0_20px_rgba(37,99,235,0.5)] hover:shadow-[0_0_30px_rgba(37,99,235,0.8)] hover:scale-105 active:scale-95"
+          >
+            PLAY AGAIN
+          </button>
         </div>
       )}
     </div>
