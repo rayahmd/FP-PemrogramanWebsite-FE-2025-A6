@@ -13,6 +13,10 @@ import CreateSpeedSorting from "./pages/speed-sorting/CreateSpeedSorting";
 import EditSpeedSorting from "./pages/speed-sorting/EditSpeedSorting";
 import SpeedSorting from "./pages/speed-sorting/SpeedSorting";
 import ProtectedRoute from "./routes/ProtectedRoutes";
+import CreateAnagram from "./pages/anagram/CreateAnagram";
+import PlayAnagram from "./pages/anagram/PlayAnagram";
+import EditAnagram from "./pages/anagram/EditAnagram";
+// Fix typo case sensitivity
 
 // 📌 TAMBAHAN 1: Import Komponen Game Pair or No Pair
 import PairOrNoPairGame from "./pages/pair-or-no-pair";
@@ -28,6 +32,7 @@ function App() {
         <Route path="/sandbox" element={<Sandbox />} />
         <Route path="/quiz/play/:id" element={<Quiz />} />
         <Route path="/speed-sorting/play/:id" element={<SpeedSorting />} />
+        <Route path="/anagram/play/:id" element={<PlayAnagram />} />
         <Route
           path="/pair-or-no-pair/play/:gameId"
           element={<PairOrNoPairGame />}
@@ -51,6 +56,8 @@ function App() {
             path="/speed-sorting/edit/:id"
             element={<EditSpeedSorting />}
           />
+          <Route path="/create-anagram" element={<CreateAnagram />} />
+          <Route path="/anagram/edit/:id" element={<EditAnagram />} />
         </Route>
       </Routes>
     </>
