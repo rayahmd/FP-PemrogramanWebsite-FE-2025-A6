@@ -62,6 +62,18 @@ export default function FlipTiles() {
   const [zoomLeaving, setZoomLeaving] = useState(false);
   const [showIntro, setShowIntro] = useState(true);
 
+  // Ref for spinner interval cleanup
+  const spinnerIntervalRef = useRef<NodeJS.Timeout | null>(null);
+
+  // Cleanup spinner on unmount
+  useEffect(() => {
+    return () => {
+      if (spinnerIntervalRef.current) {
+        clearInterval(spinnerIntervalRef.current);
+      }
+    };
+  }, []);
+
   useEffect(() => {
     const fetchGame = async () => {
       try {
@@ -335,16 +347,21 @@ export default function FlipTiles() {
   }, [tiles]);
 
   const spinRandom = () => {
+    // Clear any existing spin
+    if (spinnerIntervalRef.current) clearInterval(spinnerIntervalRef.current);
+
     const candidates = tiles.filter((t) => !t.removed);
     if (candidates.length === 0) return;
     const spins = 20;
     let idx = 0;
-    const interval = setInterval(() => {
+
+    spinnerIntervalRef.current = setInterval(() => {
       const pick = candidates[idx % candidates.length];
       setSpinnerTarget(pick.id);
       idx++;
       if (idx >= spins) {
-        clearInterval(interval);
+        if (spinnerIntervalRef.current)
+          clearInterval(spinnerIntervalRef.current);
         const finalPick =
           candidates[Math.floor(Math.random() * candidates.length)];
         setSpinnerTarget(finalPick.id);
@@ -610,12 +627,26 @@ export default function FlipTiles() {
                     perspective: "1000px",
                   }}
                   onClick={() => {
+                    if (gameData.game_json.tiles.length === 0) return;
                     const el = cardRefs.current[tile.id];
                     if (el) {
                       const rect = el.getBoundingClientRect();
                       setZoomFromRect(rect);
                     }
                     setZoomedTile(tile.id);
+                  }}
+                  role="button"
+                  tabIndex={0}
+                  onKeyDown={(e) => {
+                    if (e.key === "Enter" || e.key === " ") {
+                      e.preventDefault(); // Prevent scroll on Space
+                      const el = cardRefs.current[tile.id];
+                      if (el) {
+                        const rect = el.getBoundingClientRect();
+                        setZoomFromRect(rect);
+                      }
+                      setZoomedTile(tile.id);
+                    }
                   }}
                 >
                   <div
