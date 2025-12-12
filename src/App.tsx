@@ -22,6 +22,12 @@ import EditAnagram from "./pages/anagram/EditAnagram";
 import PairOrNoPairGame from "./pages/pair-or-no-pair";
 import CreatePairOrNoPair from "./pages/pair-or-no-pair/create";
 
+// 📌 TAMBAHAN 2: Import Komponen Gameshow Quiz
+import GameshowQuizPage from "./pages/gameshow-quiz";
+import CreateGameshowPage from "./pages/gameshow-quiz/create";
+import EditGameshowPage from "./pages/gameshow-quiz/edit";
+import { PlayGameshowPublic } from "./pages/gameshow-quiz/components";
+
 function App() {
   return (
     <>
@@ -33,6 +39,7 @@ function App() {
         <Route path="/quiz/play/:id" element={<Quiz />} />
         <Route path="/speed-sorting/play/:id" element={<SpeedSorting />} />
         <Route path="/anagram/play/:id" element={<PlayAnagram />} />
+        <Route path="/gameshow-quiz/play/:id" element={<PlayGameshowPublic />} />
         <Route
           path="/pair-or-no-pair/play/:gameId"
           element={<PairOrNoPairGame />}
@@ -51,6 +58,9 @@ function App() {
             path="/create-pair-or-no-pair"
             element={<CreatePairOrNoPair />}
           />
+          <Route path="/gameshow-quiz" element={<GameshowQuizPage />} />
+          <Route path="/gameshow-quiz/create" element={<CreateGameshowPage />} />
+          <Route path="/gameshow-quiz/edit/:id" element={<EditGameshowPage />} />
           <Route path="/quiz/edit/:id" element={<EditQuiz />} />
           <Route
             path="/speed-sorting/edit/:id"
