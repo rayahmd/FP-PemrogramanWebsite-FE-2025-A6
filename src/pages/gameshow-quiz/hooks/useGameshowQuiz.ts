@@ -1,64 +1,48 @@
-// src/hooks/useGameshowQuiz.ts
 import { useState } from 'react';
 import { GameshowQuizAPI } from '@/api/gameshow-quiz/gameshow-quiz.api';
+import type {
+    CreateGameshowPayload,
+    CheckAnswerPayload,
+} from '../gameshow';
 
 export const useGameshowQuiz = () => {
-  const [loading, setLoading] = useState(false);
-  const [error, setError] = useState<string | null>(null);
+    const [loading, setLoading] = useState(false);
+    const [error, setError] = useState<string | null>(null);
 
-  const playGame = async (gameId: string) => {
-    try {
-      setLoading(true);
-      setError(null);
-      const res = await GameshowQuizAPI.play(gameId);
-      return res.data.data;
-    } catch (err: any) {
-      setError(err.response?.data?.message ?? 'Failed to load game');
-      throw err;
-    } finally {
-      setLoading(false);
-    }
-  };
+    
+    const exec = async <T>(fn: () => Promise<T>) => {
+        try {
+            setLoading(true);
+            setError(null);
+            return await fn();
+        } catch (err: any) {
+            setError(err.response?.data?.error || err.message);
+            throw err;
+        } finally {
+            setLoading(false);
+        }
+    };
 
-  const submitAnswer = async (
-    gameId: string,
-    payload: {
-      question_index: number;
-      selected_answer_index: number;
-    },
-  ) => {
-    try {
-      setLoading(true);
-      setError(null);
-      const res = await GameshowQuizAPI.submitAnswer(gameId, payload);
-      return res.data.data;
-    } catch (err: any) {
-      setError(err.response?.data?.message ?? 'Failed to submit answer');
-      throw err;
-    } finally {
-      setLoading(false);
-    }
-  };
+    return {
+        loading,
+        error,
 
-  const getResult = async (gameId: string) => {
-    try {
-      setLoading(true);
-      setError(null);
-      const res = await GameshowQuizAPI.getResult(gameId);
-      return res.data.data;
-    } catch (err: any) {
-      setError(err.response?.data?.message ?? 'Failed to get result');
-      throw err;
-    } finally {
-      setLoading(false);
-    }
-  };
+        createGame: (payload: CreateGameshowPayload) =>
+            exec(() => GameshowQuizAPI.create(payload)),
 
-  return {
-    loading,
-    error,
-    playGame,
-    submitAnswer,
-    getResult,
-  };
+        listGames: () =>
+            exec(() => GameshowQuizAPI.list()),
+
+        getDetail: (id: string) =>
+            exec(() => GameshowQuizAPI.getDetail(id)),
+
+        playGame: (id: string) =>
+            exec(() => GameshowQuizAPI.play(id)),
+
+        previewGame: (id: string) =>
+            exec(() => GameshowQuizAPI.preview(id)),
+
+        checkAnswer: (gameId: string, payload: CheckAnswerPayload) =>
+            exec(() => GameshowQuizAPI.checkAnswer(gameId, payload)),
+    };
 };

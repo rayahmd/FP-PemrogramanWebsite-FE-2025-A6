@@ -48,6 +48,7 @@
     "react-router-dom": "^7.9.5",
     "tailwind-merge": "^3.4.0",
     "tailwindcss": "^4.1.17",
+    "uuid": "^13.0.0",
     "yet-another-react-lightbox": "^3.25.0",
     "zod": "^4.1.12",
     "zustand": "^5.0.8"
@@ -58,6 +59,7 @@
     "@types/node": "^24.10.1",
     "@types/react": "^19.1.16",
     "@types/react-dom": "^19.1.9",
+    "@types/uuid": "^10.0.0",
     "@vitejs/plugin-react": "^5.0.4",
     "eslint": "^9.39.1",
     "eslint-config-prettier": "^10.1.8",
