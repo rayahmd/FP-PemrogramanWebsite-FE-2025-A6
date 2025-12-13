@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useRef } from "react";
+import React, { useState, useEffect, useRef, useMemo } from "react";
 import Hole from "./Hole.tsx";
 import { playSound } from "../utils/SoundManager.ts";
 
@@ -52,12 +52,15 @@ const GameBoard: React.FC<GameBoardProps> = ({
   const isHitRef = useRef<boolean>(false);
   const hasStartedRef = useRef<boolean>(false);
 
-  // Level requirements
-  const LEVEL_REQUIREMENTS = {
-    1: 30, // Level 1: 30 poin
-    2: 70, // Level 2: 70 poin total
-    3: 120, // Level 3: 120 poin untuk win
-  };
+  // Level requirements (wrapped in useMemo to prevent recreation)
+  const LEVEL_REQUIREMENTS = useMemo(
+    () => ({
+      1: 30, // Level 1: 30 poin
+      2: 70, // Level 2: 70 poin total
+      3: 120, // Level 3: 120 poin untuk win
+    }),
+    [],
+  );
 
   const LEVEL_INFO = {
     1: { name: "DATA BREACH", desc: "Eliminate basic threats", color: "cyan" },
@@ -315,6 +318,8 @@ const GameBoard: React.FC<GameBoardProps> = ({
     currentLevel,
     bossHealth,
     showLevelTransition,
+    speedMultiplier,
+    timeLeft,
   ]);
 
   const handleWhack = (index: number) => {
