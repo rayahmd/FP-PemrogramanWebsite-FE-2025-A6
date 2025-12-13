@@ -1,46 +1,84 @@
-import { useParams } from "react-router-dom";
-import { useEffect, useState, useCallback } from "react";
+import { useParams, useNavigate } from "react-router-dom";
+import { useEffect, useState, useRef } from "react";
+import { Button } from "@/components/ui/button";
+import { Typography } from "@/components/ui/typography";
+import { ArrowLeft, Loader2 } from "lucide-react";
 import { useGameshowQuiz } from "./hooks/useGameshowQuiz";
 import GamePlayer from "./components/GamePlayer";
 import type { GameshowGameData } from "@/api/gameshow-quiz/types";
 
 const PlayGameshowPage = () => {
   const { id } = useParams<{ id: string }>();
-  const { playGame, loading, error } = useGameshowQuiz();
+  const navigate = useNavigate();
+  const { playGame } = useGameshowQuiz();
   const [game, setGame] = useState<GameshowGameData | null>(null);
+  const [loading, setLoading] = useState(true);
   const [loadError, setLoadError] = useState<string | null>(null);
-
-  const fetchGame = useCallback(async () => {
-    if (!id) return;
-    try {
-      const data = await playGame(id);
-      console.log("Game data received:", data);
-      setGame(data);
-    } catch (err: unknown) {
-      console.error("Failed to load game:", err);
-      const error = err as { message?: string };
-      setLoadError(error.message || "Failed to load game");
-    }
-  }, [id, playGame]);
+  const hasFetched = useRef(false);
 
   useEffect(() => {
-    fetchGame();
-  }, [fetchGame]);
+    if (!id || hasFetched.current) return;
+    hasFetched.current = true;
 
-  if (loadError || error) {
+    const fetchGame = async () => {
+      try {
+        setLoading(true);
+        const data = await playGame(id);
+        console.log("Data game diterima:", data);
+        setGame(data);
+      } catch (err: unknown) {
+        console.error("Gagal memuat game:", err);
+        const error = err as { message?: string };
+        setLoadError(error.message || "Gagal memuat game");
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    fetchGame();
+  }, [id, playGame]);
+
+  if (loading) {
     return (
-      <div className="p-6 text-center">
-        <p className="text-red-500">Error: {loadError || error}</p>
-        <p className="text-sm text-gray-500 mt-2">Game ID: {id}</p>
+      <div className="min-h-screen bg-slate-50 flex flex-col items-center justify-center">
+        <Loader2 className="w-10 h-10 animate-spin text-blue-600 mb-4" />
+        <Typography className="text-slate-600">Memuat game...</Typography>
       </div>
     );
   }
 
-  if (loading || !game) {
-    return <p className="p-6">Loading game...</p>;
+  if (loadError) {
+    return (
+      <div className="min-h-screen bg-slate-50 flex flex-col items-center justify-center p-6">
+        <Typography className="text-red-500 text-lg mb-2">
+          Error: {loadError}
+        </Typography>
+        <Typography className="text-slate-500 text-sm mb-6">
+          Game ID: {id}
+        </Typography>
+        <Button variant="outline" onClick={() => navigate(-1)}>
+          <ArrowLeft className="w-4 h-4 mr-2" />
+          Kembali
+        </Button>
+      </div>
+    );
   }
 
-  return <GamePlayer game={game} />;
+  if (!game) {
+    return (
+      <div className="min-h-screen bg-slate-50 flex flex-col items-center justify-center p-6">
+        <Typography className="text-slate-500 mb-6">
+          Game tidak ditemukan
+        </Typography>
+        <Button variant="outline" onClick={() => navigate(-1)}>
+          <ArrowLeft className="w-4 h-4 mr-2" />
+          Kembali
+        </Button>
+      </div>
+    );
+  }
+
+  return <GamePlayer game={game} onBack={() => navigate(-1)} />;
 };
 
 export default PlayGameshowPage;
