@@ -1,11 +1,17 @@
-import { useState, useCallback } from "react";
+import { useState, useCallback, useEffect, useRef } from "react";
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
 import { Typography } from "@/components/ui/typography";
-import { ArrowLeft, Trophy, Home } from "lucide-react";
+import { ArrowLeft, Trophy, Home, Volume2, VolumeX } from "lucide-react";
 import Timer from "./Timer";
 import { useGameshowQuiz } from "../hooks/useGameshowQuiz";
 import { ResultModal } from "./ScoreResult";
+
+// Audio imports
+import bgMusic from "../audio/background.mp3";
+import correctSound from "../audio/correct.mp3";
+import errorSound from "../audio/error.mp3";
+import celebrationSound from "../audio/celebration.mp3";
 
 interface GamePlayerProps {
   game: {
@@ -36,23 +42,121 @@ const GamePlayer = ({ game, onBack }: GamePlayerProps) => {
     points: number;
     correctAnswerText?: string;
   } | null>(null);
+  const [isMuted, setIsMuted] = useState(false);
+  const [gameFinished, setGameFinished] = useState(false);
+
+  // Audio refs
+  const bgMusicRef = useRef<HTMLAudioElement | null>(null);
+  const correctSoundRef = useRef<HTMLAudioElement | null>(null);
+  const errorSoundRef = useRef<HTMLAudioElement | null>(null);
+  const celebrationSoundRef = useRef<HTMLAudioElement | null>(null);
 
   const questions = game?.questions ?? [];
   const question = questions[idx];
 
+  // Initialize audio
+  useEffect(() => {
+    bgMusicRef.current = new Audio(bgMusic);
+    correctSoundRef.current = new Audio(correctSound);
+    errorSoundRef.current = new Audio(errorSound);
+    celebrationSoundRef.current = new Audio(celebrationSound);
+
+    // Configure background music
+    if (bgMusicRef.current) {
+      bgMusicRef.current.loop = true;
+      bgMusicRef.current.volume = 0.3;
+    }
+
+    // Configure sound effects
+    if (correctSoundRef.current) correctSoundRef.current.volume = 0.5;
+    if (errorSoundRef.current) errorSoundRef.current.volume = 0.5;
+    if (celebrationSoundRef.current) celebrationSoundRef.current.volume = 0.6;
+
+    return () => {
+      // Cleanup audio on unmount
+      bgMusicRef.current?.pause();
+      correctSoundRef.current?.pause();
+      errorSoundRef.current?.pause();
+      celebrationSoundRef.current?.pause();
+    };
+  }, []);
+
+  // Start background music when game starts
+  useEffect(() => {
+    if (game && questions.length > 0 && !gameFinished && !isMuted) {
+      bgMusicRef.current?.play().catch(() => {
+        // Autoplay may be blocked, that's okay
+      });
+    }
+  }, [game, questions.length, gameFinished, isMuted]);
+
+  // Handle mute toggle
+  useEffect(() => {
+    if (bgMusicRef.current) {
+      bgMusicRef.current.muted = isMuted;
+    }
+  }, [isMuted]);
+
+  // Play sound effect with background dip
+  const playSoundEffect = useCallback(
+    (soundRef: React.RefObject<HTMLAudioElement | null>) => {
+      if (isMuted || !soundRef.current) return;
+
+      // Dip background music volume
+      if (bgMusicRef.current) {
+        bgMusicRef.current.volume = 0.1;
+      }
+
+      // Reset and play sound effect
+      soundRef.current.currentTime = 0;
+      soundRef.current.play().catch(() => {});
+
+      // Restore background volume when sound effect ends
+      soundRef.current.onended = () => {
+        if (bgMusicRef.current && !gameFinished) {
+          bgMusicRef.current.volume = 0.3;
+        }
+      };
+    },
+    [isMuted, gameFinished],
+  );
+
+  // Play celebration and stop background when game finishes
+  const playCelebration = useCallback(() => {
+    if (isMuted) return;
+
+    // Stop background music
+    if (bgMusicRef.current) {
+      bgMusicRef.current.pause();
+      bgMusicRef.current.currentTime = 0;
+    }
+
+    // Play celebration
+    if (celebrationSoundRef.current) {
+      celebrationSoundRef.current.currentTime = 0;
+      celebrationSoundRef.current.play().catch(() => {});
+    }
+  }, [isMuted]);
+
   const handleTimeUp = useCallback(() => {
+    playSoundEffect(errorSoundRef);
     setLastResult({
       correct: false,
       points: 0,
       correctAnswerText: undefined,
     });
     setShowResult(true);
-  }, []);
+  }, [playSoundEffect]);
 
   const handleNext = () => {
     setShowResult(false);
     setLastResult(null);
-    setIdx((i) => i + 1);
+    const nextIdx = idx + 1;
+    if (nextIdx >= questions.length) {
+      setGameFinished(true);
+      playCelebration();
+    }
+    setIdx(nextIdx);
   };
 
   if (!game || !questions.length) {
@@ -122,8 +226,12 @@ const GamePlayer = ({ game, onBack }: GamePlayerProps) => {
       const isCorrect = res?.isCorrect ?? false;
       const earnedPoints = res?.score ?? 0;
 
+      // Play appropriate sound effect
       if (isCorrect) {
+        playSoundEffect(correctSoundRef);
         setScore((s) => s + earnedPoints);
+      } else {
+        playSoundEffect(errorSoundRef);
       }
 
       setLastResult({
@@ -168,10 +276,24 @@ const GamePlayer = ({ game, onBack }: GamePlayerProps) => {
               </div>
             </div>
           </div>
-          <div className="bg-white/20 rounded-lg px-4 py-2">
-            <Typography className="text-white font-bold">
-              Skor: {score}
-            </Typography>
+          <div className="flex items-center gap-3">
+            <Button
+              variant="ghost"
+              size="sm"
+              className="text-white hover:bg-white/20"
+              onClick={() => setIsMuted(!isMuted)}
+            >
+              {isMuted ? (
+                <VolumeX className="w-5 h-5" />
+              ) : (
+                <Volume2 className="w-5 h-5" />
+              )}
+            </Button>
+            <div className="bg-white/20 rounded-lg px-4 py-2">
+              <Typography className="text-white font-bold">
+                Skor: {score}
+              </Typography>
+            </div>
           </div>
         </div>
       </div>
