@@ -10,6 +10,8 @@ interface GameBoardProps {
   isPaused?: boolean;
   onPlayingChange?: (playing: boolean) => void;
   onPausedChange?: (paused: boolean) => void;
+  gameId?: string;
+  onScoreSubmit?: (score: number, timeLeft: number) => void;
 }
 
 const GameBoard: React.FC<GameBoardProps> = ({
@@ -17,6 +19,8 @@ const GameBoard: React.FC<GameBoardProps> = ({
   isNightmareMode = false,
   onPlayingChange,
   onPausedChange,
+  gameId,
+  onScoreSubmit,
 }) => {
   // Nightmare mode speed multiplier
   const speedMultiplier = isNightmareMode ? 0.8 : 1; // 0.8 = 1.25x faster
@@ -110,6 +114,10 @@ const GameBoard: React.FC<GameBoardProps> = ({
       setGameComplete(true);
       setIsPlaying(false);
       playSound("golden");
+      // Submit score when all levels completed
+      if (onScoreSubmit && gameId) {
+        onScoreSubmit(score, timeLeft);
+      }
     }
   }, [
     score,
@@ -118,6 +126,9 @@ const GameBoard: React.FC<GameBoardProps> = ({
     levelComplete,
     gameComplete,
     LEVEL_REQUIREMENTS,
+    onScoreSubmit,
+    gameId,
+    timeLeft,
   ]);
 
   const startGame = () => {
@@ -167,8 +178,21 @@ const GameBoard: React.FC<GameBoardProps> = ({
       playSound("gameover");
       setIsPlaying(false);
       setActiveIndex(null);
+      // Submit score when game over
+      if (onScoreSubmit && gameId) {
+        onScoreSubmit(score, 0);
+      }
     }
-  }, [isPlaying, isPaused, timeLeft, showLevelTransition, gameComplete]);
+  }, [
+    isPlaying,
+    isPaused,
+    timeLeft,
+    showLevelTransition,
+    gameComplete,
+    onScoreSubmit,
+    gameId,
+    score,
+  ]);
 
   // Mole movement logic
   useEffect(() => {

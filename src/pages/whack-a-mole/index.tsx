@@ -14,6 +14,17 @@ interface GameData {
   description?: string;
 }
 
+interface LeaderboardEntry {
+  id: string;
+  score: number;
+  time_taken: number | null;
+  created_at: string;
+  user: {
+    username: string;
+    profile_picture: string | null;
+  } | null;
+}
+
 function WhackAMoleGame() {
   const { gameId } = useParams<{ gameId: string }>();
   const navigate = useNavigate();
@@ -23,6 +34,8 @@ function WhackAMoleGame() {
   const [isNightmareMode, setIsNightmareMode] = useState(false);
   const [isPlaying, setIsPlaying] = useState(false);
   const [isPaused, setIsPaused] = useState(false);
+  const [leaderboard, setLeaderboard] = useState<LeaderboardEntry[]>([]);
+  const [showLeaderboard, setShowLeaderboard] = useState(false);
 
   // Initialize audio system
   const { isMuted, toggleMute } = useGameAudio({
@@ -81,7 +94,47 @@ function WhackAMoleGame() {
     // Stop music and return to game home screen
     setIsPlaying(false);
     setIsPaused(false);
+    setShowLeaderboard(false);
     setView("home");
+  };
+
+  // Handle score submission
+  const handleScoreSubmit = async (score: number, timeLeft: number) => {
+    if (!gameId) return;
+
+    try {
+      const token = localStorage.getItem("token");
+      // Submit score
+      await api.post(
+        `/api/game/game-type/whack-a-mole/${gameId}/score`,
+        {
+          score: score,
+          time_taken: 30 - timeLeft, // Calculate time taken
+        },
+        {
+          headers: token ? { Authorization: `Bearer ${token}` } : {},
+        },
+      );
+
+      // Fetch leaderboard
+      const response = await api.get(
+        `/api/game/game-type/whack-a-mole/${gameId}/leaderboard`,
+      );
+      setLeaderboard(response.data.data || []);
+      setShowLeaderboard(true);
+    } catch (error) {
+      console.error("Failed to submit score or fetch leaderboard:", error);
+      // Still show leaderboard even if score submission fails
+      try {
+        const response = await api.get(
+          `/api/game/game-type/whack-a-mole/${gameId}/leaderboard`,
+        );
+        setLeaderboard(response.data.data || []);
+        setShowLeaderboard(true);
+      } catch {
+        console.error("Failed to fetch leaderboard");
+      }
+    }
   };
 
   // Handle back to main homepage
@@ -180,7 +233,47 @@ function WhackAMoleGame() {
               isPaused={isPaused}
               onPlayingChange={setIsPlaying}
               onPausedChange={setIsPaused}
+              gameId={gameId}
+              onScoreSubmit={handleScoreSubmit}
             />
+
+            {/* Leaderboard Overlay */}
+            {showLeaderboard && leaderboard.length > 0 && (
+              <div className="fixed inset-0 z-[200] flex items-center justify-center bg-black/80 backdrop-blur-md">
+                <div className="bg-slate-900 border border-cyan-500/50 rounded-lg p-6 max-w-md w-full mx-4 shadow-[0_0_50px_rgba(6,182,212,0.3)]">
+                  <h3 className="text-2xl font-bold text-cyan-400 mb-4 text-center">
+                    🏆 LEADERBOARD
+                  </h3>
+                  <div className="space-y-2 max-h-96 overflow-y-auto">
+                    {leaderboard.map((entry, index) => (
+                      <div
+                        key={entry.id}
+                        className="flex items-center gap-3 bg-slate-800/50 p-3 rounded border border-slate-700"
+                      >
+                        <span className="text-xl font-bold text-slate-400 w-8">
+                          #{index + 1}
+                        </span>
+                        <div className="flex-1">
+                          <div className="text-white font-semibold">
+                            {entry.user?.username || "Anonymous"}
+                          </div>
+                          <div className="text-xs text-slate-400">
+                            Score: {entry.score} | Time:{" "}
+                            {entry.time_taken ? `${entry.time_taken}s` : "N/A"}
+                          </div>
+                        </div>
+                      </div>
+                    ))}
+                  </div>
+                  <button
+                    onClick={() => setShowLeaderboard(false)}
+                    className="mt-4 w-full px-4 py-2 bg-cyan-600 hover:bg-cyan-500 text-white font-bold rounded transition"
+                  >
+                    CLOSE
+                  </button>
+                </div>
+              </div>
+            )}
           </>
         )}
 
