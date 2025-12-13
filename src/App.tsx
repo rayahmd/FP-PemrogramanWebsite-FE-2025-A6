@@ -19,6 +19,9 @@ import EditAnagram from "./pages/Anagram/EditAnagram";
 
 import PairOrNoPairGame from "./pages/pair-or-no-pair";
 import CreatePairOrNoPair from "./pages/pair-or-no-pair/create";
+import CreateTrueOrFalse from "./pages/true-or-false/CreateTrueOrFalse";
+import EditTrueOrFalse from "./pages/true-or-false/EditTrueOrFalse";
+import PlayTrueOrFalse from "./pages/true-or-false/TrueOrFalse";
 
 function App() {
   return (
@@ -35,6 +38,7 @@ function App() {
           path="/pair-or-no-pair/play/:gameId"
           element={<PairOrNoPairGame />}
         />
+        <Route path="/true-or-false/play/:id" element={<PlayTrueOrFalse />} />
 
         <Route element={<ProtectedRoute />}>
           <Route path="/profile" element={<ProfilePage />} />
@@ -56,6 +60,8 @@ function App() {
           />
           <Route path="/create-anagram" element={<CreateAnagram />} />
           <Route path="/anagram/edit/:id" element={<EditAnagram />} />
+          <Route path="/create-true-or-false" element={<CreateTrueOrFalse />} />
+          <Route path="/true-or-false/edit/:id" element={<EditTrueOrFalse />} />
         </Route>
       </Routes>
     </>
